@@ -7,6 +7,11 @@
  * edit it directly.
  */
 
+// this is the mod mask you wish to use to toggle the "spongebob mocking text"
+// mode on or off (in this case I use Left Ctrl + Left Shift + F12) however
+// you're free to change this to anything you like.
+#define MODS_MASK (MOD_BIT(KC_LSHIFT) | MOD_BIT(KC_LCTRL))
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[0] = LAYOUT(KC_ESC, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_F12, KC_DEL, KC_MUTE, 
 		KC_GRV, KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_EQL, KC_BSPC, KC_HOME, 
@@ -20,7 +25,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_TRNS, KC_TRNS, RGB_VAI, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, RESET, KC_MFFD, 
 		KC_CAPS, KC_TRNS, RGB_VAD, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, LGUI(KC_L), KC_TRNS, KC_TRNS, KC_TRNS, KC_MRWD, 
 		KC_TRNS, KC_TRNS, RGB_HUI, KC_TRNS, KC_TRNS, KC_TRNS, NK_TOGG, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, RGB_MOD, KC_TRNS, 
-		KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, RGB_SPD, RGB_RMOD, RGB_SPI)
+		KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, MO(2), KC_TRNS, KC_TRNS, RGB_SPD, RGB_RMOD, RGB_SPI)
+
+	/*[2] = LAYOUT(KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, 
+		KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, 
+		KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, 
+		TAUNTXT, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, 
+		KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, 
+		KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS)*/
 
 	/*[2] = LAYOUT(KC_ESC, KC_F1, KC_F2, KC_F3, KC_F4, KC_F5, KC_F6, KC_F7, KC_F8, KC_F9, KC_F10, KC_F11, KC_F12, KC_DEL, KC_MUTE, 
 		KC_GRV, KC_1, KC_2, KC_3, KC_4, KC_5, KC_6, KC_7, KC_8, KC_9, KC_0, KC_MINS, KC_EQL, KC_BSPC, KC_HOME, 
@@ -40,6 +52,44 @@ bool encoder_update_user(uint8_t index, bool clockwise) {
     return true;
 }
 
+// bool that holds the current state on or off
+bool is_sponge_active = false;
+
+// random bool
+bool random_bool(void) {
+    bool rbool = rand() & 1;
+    return rbool;
+}
+
+bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case KC_A ... KC_Z: {
+            if (is_sponge_active && record->event.pressed) {
+                if (random_bool()) {
+                    register_code(KC_LSHIFT);
+                }
+            }
+            break;
+        }
+        case KC_F12:
+            if ((keyboard_report->mods & MODS_MASK) && record->event.pressed) is_sponge_active = !is_sponge_active;
+            break;
+    }
+
+    return true;
+}
+
+void post_process_record_user(uint16_t keycode, keyrecord_t *record) {
+    switch (keycode) {
+        case KC_A ... KC_Z: {
+            if (is_sponge_active && record->event.pressed) {
+                unregister_code(KC_LSHIFT);
+            }
+        }
+    }
+
+}
+
 void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
 
     if (IS_HOST_LED_ON(USB_LED_CAPS_LOCK)) {
@@ -52,7 +102,11 @@ void rgb_matrix_indicators_advanced_user(uint8_t led_min, uint8_t led_max) {
         RGB_MATRIX_INDICATOR_SET_COLOR(67, 0, 255, 0); //side led 01
         RGB_MATRIX_INDICATOR_SET_COLOR(70, 0, 255, 0); //side led 02
         RGB_MATRIX_INDICATOR_SET_COLOR(73, 0, 255, 0); //side led 03
-    }*/   
+    }*/
+	/*if (is_sponge_active) {
+		RGB_MATRIX_INDICATOR_SET_COLOR(4, 255, 0, 0); //Left Shift
+		RGB_MATRIX_INDICATOR_SET_COLOR(90, 255, 0, 0); //Right Shift
+	}*/  
     if (!IS_HOST_LED_ON(USB_LED_NUM_LOCK)) {   // on if NUM lock is OFF
     	RGB_MATRIX_INDICATOR_SET_COLOR(83, 255, 0, 0); //side led 06
     	RGB_MATRIX_INDICATOR_SET_COLOR(87, 255, 0, 0); //side led 07
